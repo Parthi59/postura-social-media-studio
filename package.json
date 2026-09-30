@@ -1,0 +1,17 @@
+{
+  "name": "postura-studio",
+  "private": true,
+  "version": "0.1.0",
+  "workspaces": ["apps/*"],
+  "scripts": {
+    "dev": "concurrently \"npm:dev:web\" \"npm:dev:api\"",
+    "dev:web": "npm --workspace apps/web run dev",
+    "dev:api": "npm --workspace apps/api run dev",
+    "build": "npm --workspace apps/web run build && npm --workspace apps/api run build",
+    "db:push": "npm --workspace apps/api run db:push",
+    "db:studio": "npm --workspace apps/api run db:studio"
+  },
+  "devDependencies": {
+    "concurrently": "^9.0.1"
+  }
+}
