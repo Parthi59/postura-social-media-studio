@@ -4,8 +4,6 @@
 
 POSTURA is an AI-powered Social Media Studio that manages the full campaign lifecycle — from content creation and platform adaptation to human review, approval, scheduling, real publishing, verification, and audit history.
 
-[Live Product](https://postura-social-media-studio.vercel.app) · [API Health](https://postura-social-media-studio-production.up.railway.app/api/health)
-
 ## What POSTURA solves
 
 Most social tools stop at content generation or scheduling. POSTURA treats publishing as an operational workflow:
