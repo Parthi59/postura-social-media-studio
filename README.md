@@ -1,471 +1,244 @@
-POSTURA — Social Media Studio
+# POSTURA — Social Media Studio
+
+**Create with freedom. Operate with control. Publish with proof.**
+
+POSTURA is an AI-powered Social Media Studio that manages the full campaign lifecycle — from content creation and platform adaptation to human review, approval, scheduling, real publishing, verification, and audit history.
+
+[Live Demo](https://postura-social-media-studio.vercel.app) · [API Health](https://postura-social-media-studio-production.up.railway.app/api/health)
+
+## What POSTURA solves
+
+Most social tools stop at content generation or scheduling. POSTURA treats publishing as an operational workflow:
+
+**Brief → Create → Adapt → Review → Approve → Publish → Verify → Learn**
+
+A campaign is versioned, reviewed, approved, scheduled, published through real platform adapters, and recorded with delivery evidence.
+
+## Production capabilities
+
+- Real Discord publishing
+- Real Mastodon publishing
+- Platform-specific campaign variants
+- Version-aware human approval workflow
+- Review notes with resolve/reopen state
+- Approval invalidation after content edits
+- Durable scheduling with restart recovery
+- Retry handling for HTTP 408, 429 and 5xx responses
+- Idempotent publishing to prevent duplicate delivery
+- Publication receipts with HTTP status, latency, external IDs and attempt history
+- Campaign activity/audit trail
+- AI Campaign Brain for readiness, risks and next actions
+- Real connection-status reporting from the backend
+
+## Campaign Brain
+
+POSTURA includes an AI operations layer called **Campaign Brain**.
+
+It evaluates the current campaign state rather than acting as a generic caption generator. It can reason over:
+
+- source content
+- Discord and Mastodon variants
+- unresolved review notes
+- approval state
+- publishing readiness
+- operational risks
+- suggested next actions
+
+Provider: **Groq**  
+Model: **openai/gpt-oss-120b**
 
-POSTURA is a Social Media Studio that combines a creative campaign workspace with a controlled publishing operating system.
+Applying an AI suggestion creates a new campaign version, which invalidates the previous approval. Human approval remains part of the publishing gate.
+
+## Architecture
+
+```text
+                     ┌─────────────────────┐
+                     │   POSTURA Web App   │
+                     │ React + TypeScript  │
+                     │      Vercel         │
+                     └──────────┬──────────┘
+                                │ HTTPS
+                                ▼
+                     ┌─────────────────────┐
+                     │    POSTURA API      │
+                     │ Express + Prisma    │
+                     │      Railway        │
+                     └──────┬───────┬──────┘
+                            │       │
+                     ┌──────▼───┐ ┌─▼──────────┐
+                     │ Discord  │ │ Mastodon   │
+                     │ Adapter  │ │ Adapter    │
+                     └──────────┘ └────────────┘
+                            │
+                            ▼
+                     Campaign receipts,
+                     schedules & activity
+```
+
+## Tech stack
+
+**Frontend**
+- React
+- TypeScript
+- Vite
+- Tailwind CSS / custom CSS
+- React Router
+- Vercel
+
+**Backend**
+- Node.js
+- Express
+- TypeScript
+- Prisma
+- SQLite
+- Railway
+
+**AI & Integrations**
+- Groq API
+- openai/gpt-oss-120b
+- Discord Webhooks
+- Mastodon API
+
+## Core product routes
 
-It is designed around the full campaign lifecycle:
+- `/studio` — campaign workspace
+- `/campaigns` — campaign management
+- `/review` — review queue
+- `/calendar` — scheduled publishing
+- `/publishing` — publication receipts
+- `/activity` — audit trail
+- `/connections` — live publisher status
+- `/intelligence` — Campaign Brain
 
-Brief → Create → Adapt → Review → Approve → Publish → Verify → Learn
+## Publishing workflow
 
-POSTURA is not just a scheduler, not just an AI caption tool, and not just a dashboard.
+1. Create or ingest campaign content.
+2. Adapt content into platform-specific variants.
+3. Send the current version to review.
+4. Resolve review notes.
+5. Approve the exact content version.
+6. Publish immediately or schedule delivery.
+7. POSTURA records attempts, latency, response status and external publication data.
+8. Activity history preserves the operational trail.
 
-Its core principle is:
+Editing approved content creates a new version and requires approval again.
 
-Create with freedom. Operate with control. Publish with proof.
+## Reliability controls
 
-Product Overview
+### Idempotency
 
-POSTURA combines two product layers:
+Publication keys are tied to platform, campaign, content version and request/schedule identifiers. Repeating the same idempotent operation does not intentionally create a duplicate publication.
 
-1. Creative Workspace
+### Retry engine
 
-A campaign can begin from a stored source brief or Markdown input and then evolve into platform-specific versions.
+POSTURA retries eligible failures, including:
 
-Each campaign can contain:
+- HTTP 408
+- HTTP 429
+- HTTP 5xx
 
-title
+Each publication stores attempt count, HTTP status, latency, retry information and the final result.
 
-original source content
+### Scheduler recovery
 
-platform-specific variants
+Schedules are persisted. On API restart, interrupted work is recovered and due schedules are checked again instead of relying on a browser timer.
 
-content version
+## Repository structure
 
-approval state
-
-review notes tied to the exact version
-
-publication history
-
-scheduled publishing state
-
-delivery receipts
-
-AI intelligence history
-
-2. Social Media Operating System
-
-POSTURA controls the publishing lifecycle through:
-
-executable platform constraints
-
-review and approval gates
-
-version-aware approvals
-
-durable scheduling
-
-retry logic
-
-idempotent publishing
-
-adapter-based platform publishing
-
-publication receipts
-
-activity history
-
-restart recovery
-
-Key Features
-
-Source Ingestion
-
-POSTURA supports source-content ingestion through:
-
-POST /api/posts/ingest
-
-A single source can be transformed into channel-specific working variants.
-
-Platform Variants
-
-Supported adapters include:
-
-Real adapters
-
-Discord
-
-Mastodon
-
-Mock adapters
-
-mock_x
-
-mock_linkedin
-
-Each platform uses its own executable constraint profile.
-
-Examples include:
-
-maximum content length
-
-hashtag limits
-
-tone validation
-
-uppercase restrictions
-
-repeated punctuation rules
-
-Human Review and Approval
-
-POSTURA keeps human approval inside the publishing workflow.
-
-Important behavior:
-
-approval belongs to an exact content version
-
-editing content creates a new version
-
-earlier approval becomes invalid after a new version is created
-
-unresolved review notes block approval
-
-unapproved content cannot be scheduled
-
-Durable Scheduling
-
-Scheduled campaigns are persisted instead of relying on browser state or in-memory timers.
-
-The scheduler:
-
-checks for due schedules periodically
-
-executes approved campaign versions
-
-records execution state
-
-links schedules to publication receipts
-
-recovers persisted schedules after API restart
-
-Idempotent Publishing
-
-Publishing is protected with idempotency keys.
-
-A publication key includes information such as:
-
-platform
-campaign
-content version
-request/schedule identifier
-
-Repeating the same idempotent request returns the existing publication instead of creating a duplicate.
-
-Retry Engine
-
-POSTURA includes retry handling for publish responses such as:
-
-HTTP 408
-
-HTTP 429
-
-HTTP 5xx
-
-Publication records retain:
-
-attempt count
-
-HTTP status
-
-latency
-
-Retry-After information
-
-last attempt time
-
-final error message where applicable
-
-Publication Receipts
-
-Successful or failed publish attempts produce operational receipts.
-
-A publication record can include:
-
-platform
-
-status
-
-external ID
-
-external URL
-
-idempotency key
-
-HTTP status
-
-latency
-
-attempt count
-
-retry metadata
-
-timestamps
-
-This makes publishing auditable instead of relying on a UI-only success state.
-
-Campaign Brain
-
-POSTURA includes an AI feature called Campaign Brain.
-
-Current provider:
-
-Groq
-
-Current model:
-
-openai/gpt-oss-120b
-
-Campaign Brain evaluates the campaign workflow rather than generating isolated captions.
-
-It can reason over:
-
-original source
-
-platform variants
-
-platform fit
-
-unresolved review state
-
-approval state
-
-campaign risks
-
-publishing readiness
-
-suggested next actions
-
-Applying an AI suggestion creates a new campaign version and therefore invalidates any earlier approval.
-
-AI does not replace the human approval gate.
-
-Architecture
-
-POSTURA is organized as a monorepo.
-
-postura-studio/
+```text
+postura-social-media-studio/
 ├── apps/
-│ ├── api/
-│ └── web/
+│   ├── api/          # Express API, Prisma, scheduler, publishers
+│   └── web/          # React/Vite product frontend
+├── EVIDENCE.md       # functional verification notes
 ├── README.md
-├── EVIDENCE.md
-├── BUILDLOG.md
-└── .env.example
+├── package.json
+└── .gitignore
+```
 
-Web
+## Local setup
 
-The frontend is built with:
-
-React
-
-TypeScript
-
-Tailwind CSS / custom CSS
-
-React Router
-
-The product has two experiences:
-
-/
-
-Public POSTURA company website.
-
-/studio
-
-Working Social Media Studio.
-
-Additional product routes include:
-
-/campaigns
-/review
-/calendar
-/publishing
-/activity
-/connections
-/intelligence
-
-API
-
-The backend provides:
-
-campaign persistence
-
-source ingestion
-
-platform variants
-
-review workflow
-
-approval workflow
-
-publication adapters
-
-scheduling
-
-retries
-
-idempotency
-
-activity events
-
-Campaign Brain
-
-publication receipts
-
-Publisher Adapter Seam
-
-Publishing is separated behind a SocialPublisher-style adapter architecture.
-
-The default publisher can be selected through configuration:
-
-$env:POSTURA_DEFAULT_PUBLISHER="mock_linkedin"
-
-Example supported publisher names:
-
-discord
-mastodon
-mock_x
-mock_linkedin
-
-This allows platform implementation to change without changing the campaign workflow.
-
-Environment Setup
-
-Copy the example environment file:
-
-Copy-Item .env.example .env
-
-Fill in only the services you plan to use.
-
-Never commit the real .env file.
-
-Install
-
-From the project root:
-
+```bash
 npm install
+```
 
-Database / Prisma
+Create `apps/api/.env` from `apps/api/.env.example` and provide only the services you want to use.
 
-If Prisma setup is required:
+Required database configuration:
 
-npm --workspace apps/api exec prisma validate
-npm --workspace apps/api exec prisma db push
-npm --workspace apps/api exec prisma generate
+```env
+DATABASE_URL="file:./dev.db"
+```
 
-Development
+Optional production integrations:
 
-Run the project from the repository root.
+```env
+DISCORD_WEBHOOK_URL=""
+MASTODON_BASE_URL=""
+MASTODON_ACCESS_TOKEN=""
+GROQ_API_KEY=""
+GROQ_MODEL="openai/gpt-oss-120b"
+```
 
-API:
+Never commit real credentials.
 
-npm --workspace apps/api run dev
+### Run locally
 
-Web:
-
-npm --workspace apps/web run dev
-
-If the root development script starts both applications:
-
+```bash
 npm run dev
+```
 
-Production Build
+Or run each workspace separately:
 
-API:
+```bash
+npm --workspace apps/api run dev
+npm --workspace apps/web run dev
+```
 
+### Production build
+
+```bash
 npm --workspace apps/api run build
-
-Web:
-
 npm --workspace apps/web run build
+```
 
-Both commands should complete without TypeScript errors before submission.
+## Deployment
 
-API Health Check
+**Frontend:** Vercel  
+**Backend:** Railway
 
-With the API running:
+Frontend production environment:
 
-http://localhost:4000/api/health
+```env
+VITE_API_URL=https://postura-social-media-studio-production.up.railway.app
+```
 
-Expected response:
+Backend CORS origin:
 
-{
-"ok": true,
-"service": "postura-api"
-}
+```env
+WEB_ORIGIN=https://postura-social-media-studio.vercel.app
+```
 
-Core Acceptance Behaviors
+## Verification
 
-POSTURA has been tested for:
+The deployed system has been verified for:
 
-API health
+- API health
+- real Discord connection
+- real Mastodon connection
+- real Discord publishing
+- real Mastodon publishing
+- review and approval gating
+- version invalidation
+- scheduling
+- retry behavior
+- idempotency
+- publication receipts
+- activity history
+- Campaign Brain
 
-source ingestion
+See `EVIDENCE.md` for additional implementation evidence.
 
-platform-specific variants
+---
 
-executable constraint validation
-
-invalid-content rejection
-
-human review
-
-review-note approval blocking
-
-version-aware approval
-
-unapproved schedule rejection
-
-real Discord publishing
-
-real Mastodon publishing
-
-mock_x publishing
-
-mock_linkedin publishing
-
-idempotency
-
-adapter swapping
-
-durable scheduling
-
-restart recovery
-
-exactly-once scheduled publication
-
-publication receipts
-
-Campaign Brain
-
-Full test outputs are documented in:
-
-EVIDENCE.md
-
-Security
-
-Do not commit:
-
-Discord tokens / webhook secrets
-
-Mastodon tokens
-
-Groq API keys
-
-database credentials
-
-private platform credentials
-
-Only placeholder values should exist in:
-
-.env.example
-
-Before submission, verify the repository contains no secrets.
-
-Capstone Positioning
-
-POSTURA is built as a Social Media Studio.
-
-Its product philosophy is:
-
-Creativity on one side. Control on the other. Intelligence in the middle.
+**POSTURA** — Creativity on one side. Control on the other. Intelligence in the middle.
