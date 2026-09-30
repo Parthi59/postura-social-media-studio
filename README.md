@@ -202,20 +202,13 @@ npm --workspace apps/web run build
 
 ## Deployment
 
-**Frontend:** Vercel  
-**Backend:** Railway
+POSTURA uses a separated production architecture:
 
-Frontend production environment:
+- **Frontend:** Vercel
+- **Backend:** Railway
+- **Configuration:** environment variables managed outside the repository
 
-```env
-VITE_API_URL=https://postura-social-media-studio-production.up.railway.app
-```
-
-Backend CORS origin:
-
-```env
-WEB_ORIGIN=https://postura-social-media-studio.vercel.app
-```
+Production credentials and platform secrets are never stored in source control.
 
 ## Verification
 
